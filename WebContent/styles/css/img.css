@@ -1,0 +1,9 @@
+@CHARSET "UTF-8";
+
+/* Gift图片规定大小 以免影响样式  */
+div.lp_img img {
+	width: 1087px;
+	height: 280px;
+	position: relative;
+	left: 130px;
+}

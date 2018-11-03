@@ -1,0 +1,101 @@
+�?<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+  		http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+  		http://www.springframework.org/schema/aop 
+  		http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+  		http://www.springframework.org/schema/tx 
+  		http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+        http://www.springframework.org/schema/task     
+        http://www.springframework.org/schema/task/spring-task-4.1.xsd  
+  		http://www.springframework.org/schema/context
+  		http://www.springframework.org/schema/context/spring-context-4.1.xsd">
+
+	<!-- 数据源的配置 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<!-- 指定连接数据库的驱动 -->
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<!-- 指定连接数据库的URL -->
+		<property name="url" value="jdbc:mysql://localhost:3306/gift_ems" />
+		<!-- 指定连接数据库的用户�? -->
+		<property name="username" value="root" />
+		<!-- 指定连接数据库的密码 -->
+		<property name="password" value="" />
+	</bean>
+
+	<!-- 配置SessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+				<prop key="hibernate.show_sql">
+					true
+				</prop>
+				<prop key="hibernate.hbm2ddl.auto">
+					update
+				</prop>
+			</props>
+		</property>
+		<property name="mappingResources">
+			<list>
+				<value>com/ziqi/user/pojos/User.hbm.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- Hibernate的事务管理器 -->
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+	<!-- 事务增强 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<!-- 配置详细的事务定�? -->
+		<tx:attributes>
+			<!-- �?有以get为开头的方法使用read-only�? -->
+			<tx:method name="get*" read-only="true" />
+			<!-- 其他方法使用默认的事务设�? -->
+			<tx:method name="*" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 事务切面 -->
+	<aop:config>
+		<!-- 该切入点匹配com的子孙包中的service包中的以ServiceImpl结尾类中�?有的方法 -->
+		<aop:pointcut expression="execution(* com.ziqi.user.service.*Service.*(..))"
+			id="txMethods" />
+		<!-- 指定在allMethods切入点应用txAdvice切面 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txMethods" />
+	</aop:config>
+
+	<!-- 配置Dao -->
+	<bean id="userDao" class="com.ziqi.user.dao.UserDao">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- 配置Service -->
+	<bean id="userService" class="com.ziqi.user.service.UserService">
+		<property name="userDao" ref="userDao" />
+	</bean>
+
+	<!-- 配置LoginAction -->
+	<bean id="loginAction" class="com.ziqi.login.LoginAction" scope="prototype">
+		<property name="userService" ref="userService" />
+	</bean>
+	
+	<!-- 配置RegAction -->
+	<bean id="regAction" class="com.ziqi.login.RegAction" scope="prototype">
+		<property name="userService" ref="userService" />
+	</bean>
+	
+</beans>
